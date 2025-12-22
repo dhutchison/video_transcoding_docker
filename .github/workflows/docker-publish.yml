@@ -15,6 +15,16 @@ jobs:
   build-and-push-image:
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        include:
+          - base: ruby:3.4-slim
+            java: ""
+            suffix: ""
+          - base: ruby:3.4-slim
+            java: "21"
+            suffix: "-ruby3.4-jdk21"
+
     permissions:
       packages: write
       contents: read
@@ -42,10 +52,12 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           build-args: |
+            BASE_IMAGE=${{ matrix.base }}
             VIDEO_TRANSCODING_VERSION=${{ inputs.version }}
+            JAVA_VERSION=${{ matrix.java }}
           tags: |
-            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ inputs.version }}
-            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest
+            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ inputs.version }}${{ matrix.suffix }}
+            ${{ matrix.suffix == '' && format('ghcr.io/{0}/{1}:latest', github.repository_owner, github.event.repository.name) || '' }}
 
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v3
@@ -57,5 +69,5 @@ jobs:
       - name: Validate multi-arch manifest
         run: |
           docker manifest inspect \
-            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ inputs.version }}
+            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ inputs.version }}${{ matrix.suffix }}
 
