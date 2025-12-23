@@ -1,0 +1,16 @@
+name: Validate Schema Ref
+
+on:
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure ref is a schema tag
+        run: |
+          ref="${{ github.ref_name }}"
+          if ! [[ "$ref" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Image builds must run from a schema tag (vX.Y.Z)"
+            exit 1
+          fi

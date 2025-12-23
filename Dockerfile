@@ -41,6 +41,7 @@ ENV PATH="/opt/video_transcoding:${PATH}"
 LABEL org.opencontainers.image.title="video-transcoding"
 LABEL org.opencontainers.image.version="${VIDEO_TRANSCODING_VERSION}"
 LABEL org.opencontainers.image.java="${JAVA_VERSION:-none}"
+LABEL org.opencontainers.image.build-schema=$BUILD_SCHEMA_VERSION
 
 
 # Working directory for transcoding workloads

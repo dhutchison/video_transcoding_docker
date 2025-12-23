@@ -12,6 +12,9 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  validate-schema:
+    uses: ./.github/workflows/validate-schema-ref.yml
+
   build-and-push-image:
     runs-on: ubuntu-latest
 
@@ -55,6 +58,7 @@ jobs:
             BASE_IMAGE=${{ matrix.base }}
             VIDEO_TRANSCODING_VERSION=${{ inputs.version }}
             JAVA_VERSION=${{ matrix.java }}
+            BUILD_SCHEMA_VERSION=${{ github.ref_name }}
           tags: |
             ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ inputs.version }}${{ matrix.suffix }}
             ${{ matrix.suffix == '' && format('ghcr.io/{0}/{1}:latest', github.repository_owner, github.event.repository.name) || '' }}

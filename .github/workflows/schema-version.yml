@@ -1,0 +1,66 @@
+name: Tag Build Schema Version
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  tag-schema:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine schema bump
+        id: bump
+        run: |
+          labels=$(jq -r '.pull_request.labels[].name' <<< '${{ toJson(github.event) }}')
+
+          bump=""
+          for level in major minor patch; do
+            if echo "$labels" | grep -q "schema:$level"; then
+              bump="$level"
+              break
+            fi
+          done
+
+          echo "bump=$bump" >> $GITHUB_OUTPUT
+
+      - name: Exit if no schema label
+        if: steps.bump.outputs.bump == ''
+        run: echo "No schema bump requested."
+
+      - name: Get latest schema tag
+        id: latest
+        run: |
+          git fetch --tags
+          tag=$(git tag -l "v*" --sort=-v:refname | head -n1)
+          echo "latest=${tag:-v0.0.0}" >> $GITHUB_OUTPUT
+
+      - name: Calculate next version
+        id: next
+        run: |
+          ver=${{ steps.latest.outputs.latest }}
+          ver=${ver#v}
+          IFS=. read -r major minor patch <<< "$ver"
+
+          case "${{ steps.bump.outputs.bump }}" in
+            major) major=$((major+1)); minor=0; patch=0 ;;
+            minor) minor=$((minor+1)); patch=0 ;;
+            patch) patch=$((patch+1)) ;;
+          esac
+
+          echo "next=v${major}.${minor}.${patch}" >> $GITHUB_OUTPUT
+
+      - name: Create schema tag
+        run: |
+          git tag ${{ steps.next.outputs.next }}
+          git push origin ${{ steps.next.outputs.next }}

@@ -1,0 +1,35 @@
+name: Check upstream video_transcoding tag
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      changed: ${{ steps.compare.outputs.changed }}
+
+    steps:
+      - name: Get latest upstream tag
+        id: version
+        run: |
+          TAG=$(git ls-remote --tags https://github.com/lisamelton/video_transcoding.git \
+            | awk -F/ '{print $NF}' \
+            | grep '^v' \
+            | sort -V \
+            | tail -1 \
+            | sed 's/^v//')
+          echo "version=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Compare with last built version
+        id: compare
+        run: |
+          LAST=$(cat .last_version 2>/dev/null || echo "none")
+          if [ "$LAST" != "${{ steps.version.outputs.version }}" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
