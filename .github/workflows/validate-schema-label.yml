@@ -1,0 +1,37 @@
+name: Validate Schema Label
+
+on:
+  pull_request:
+    types: [opened, edited, labeled, unlabeled, synchronize, reopened]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check schema labels
+        run: |
+          labels=$(jq -r '.pull_request.labels[].name' <<< '${{ toJson(github.event) }}')
+
+          count=$(echo "$labels" | grep -c "^schema:" || true)
+
+          if [ "$count" -eq 0 ]; then
+            echo "❌ Missing schema label."
+            echo "Add exactly one of:"
+            echo "  - schema:major"
+            echo "  - schema:minor"
+            echo "  - schema:patch"
+            exit 1
+          fi
+
+          if [ "$count" -gt 1 ]; then
+            echo "❌ Multiple schema labels found:"
+            echo "$labels" | grep "^schema:"
+            echo "Only one schema:* label is allowed."
+            exit 1
+          fi
+
+          echo "✅ Schema label validation passed."
