@@ -1,35 +1,90 @@
-name: Check upstream video_transcoding tag
+name: Check Upstream video_transcoding & Trigger Build
 
 on:
   schedule:
-    - cron: "0 2 * * *"
-  workflow_dispatch: {}
+    - cron: "0 6 * * *"   # daily
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+  actions: write
 
 jobs:
-  check:
+  check-and-trigger:
     runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.version.outputs.version }}
-      changed: ${{ steps.compare.outputs.changed }}
 
     steps:
-      - name: Get latest upstream tag
-        id: version
+      - name: Get latest upstream video_transcoding version
+        id: upstream
         run: |
-          TAG=$(git ls-remote --tags https://github.com/lisamelton/video_transcoding.git \
-            | awk -F/ '{print $NF}' \
-            | grep '^v' \
-            | sort -V \
-            | tail -1 \
-            | sed 's/^v//')
-          echo "version=$TAG" >> $GITHUB_OUTPUT
+          latest=$(curl -s https://api.github.com/repos/lisamelton/video_transcoding/releases/latest \
+            | jq -r '.tag_name' | sed 's/^v//')
 
-      - name: Compare with last built version
+          if [ -z "$latest" ] || [ "$latest" = "null" ]; then
+            echo "Failed to determine upstream version"
+            exit 1
+          fi
+
+          echo "latest=$latest" >> $GITHUB_OUTPUT
+
+      - name: Get published image tags from GHCR
+        id: ghcr
+        env:
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
+        run: |
+          tags=$(curl -s \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://ghcr.io/v2/${OWNER}/${REPO}/tags/list" \
+            | jq -r '.tags[]')
+
+          echo "$tags" > tags.txt
+
+          latest_published=$(grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' tags.txt \
+            | sort -V | tail -n1 || true)
+
+          echo "latest_published=$latest_published" >> $GITHUB_OUTPUT
+
+      - name: Compare versions
         id: compare
         run: |
-          LAST=$(cat .last_version 2>/dev/null || echo "none")
-          if [ "$LAST" != "${{ steps.version.outputs.version }}" ]; then
-            echo "changed=true" >> $GITHUB_OUTPUT
+          upstream="${{ steps.upstream.outputs.latest }}"
+          published="${{ steps.ghcr.outputs.latest_published }}"
+
+          echo "Upstream version:  $upstream"
+          echo "Published version: $published"
+
+          if [ "$upstream" = "$published" ]; then
+            echo "trigger=false" >> $GITHUB_OUTPUT
           else
-            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "trigger=true" >> $GITHUB_OUTPUT
           fi
+
+      - name: Resolve latest schema tag
+        if: steps.compare.outputs.trigger == 'true'
+        id: schema
+        run: |
+          git ls-remote --tags https://github.com/${{ github.repository }} \
+            | awk -F/ '{print $NF}' \
+            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
+            | sort -V \
+            | tail -n1 > schema.txt
+
+          schema=$(cat schema.txt)
+
+          if [ -z "$schema" ]; then
+            echo "No schema tag found"
+            exit 1
+          fi
+
+          echo "schema=$schema" >> $GITHUB_OUTPUT
+
+      - name: Trigger image build workflow
+        if: steps.compare.outputs.trigger == 'true'
+        run: |
+          gh workflow run docker-build.yml \
+            --ref "${{ steps.schema.outputs.schema }}" \
+            -f video_transcoding_version="${{ steps.upstream.outputs.latest }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
