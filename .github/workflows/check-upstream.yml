@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
-      
+
       - name: Get latest upstream video_transcoding version
         id: upstream
         run: |
@@ -87,7 +87,7 @@ jobs:
       - name: Trigger image build workflow
         if: steps.compare.outputs.trigger == 'true'
         run: |
-          gh workflow run docker-build.yml \
+          gh workflow run docker-publish.yml \
             --ref "${{ steps.schema.outputs.schema }}" \
             -f video_transcoding_version="${{ steps.upstream.outputs.latest }}"
         env:
