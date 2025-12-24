@@ -89,6 +89,6 @@ jobs:
         run: |
           gh workflow run docker-publish.yml \
             --ref "${{ steps.schema.outputs.schema }}" \
-            -f video_transcoding_version="${{ steps.upstream.outputs.latest }}"
+            -f version="${{ steps.upstream.outputs.latest }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
