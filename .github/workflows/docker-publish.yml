@@ -12,8 +12,6 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  validate-schema:
-    uses: ./.github/workflows/validate-schema-ref.yml
 
   build-and-push-image:
     runs-on: ubuntu-latest

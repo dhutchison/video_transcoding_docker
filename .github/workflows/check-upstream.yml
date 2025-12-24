@@ -15,6 +15,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: actions/checkout@v5
+
       - name: Get latest upstream video_transcoding version
         id: upstream
         run: |
@@ -34,10 +36,12 @@ jobs:
           OWNER: ${{ github.repository_owner }}
           REPO: ${{ github.event.repository.name }}
         run: |
-          tags=$(curl -s \
+          tags=$(curl -L \
+            -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            "https://ghcr.io/v2/${OWNER}/${REPO}/tags/list" \
-            | jq -r '.tags[]')
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/users/${OWNER}/packages/container/${REPO}/versions" \
+            | jq -r '.[].metadata.container.tags[]')
 
           echo "$tags" > tags.txt
 
@@ -83,8 +87,8 @@ jobs:
       - name: Trigger image build workflow
         if: steps.compare.outputs.trigger == 'true'
         run: |
-          gh workflow run docker-build.yml \
+          gh workflow run docker-publish.yml \
             --ref "${{ steps.schema.outputs.schema }}" \
-            -f video_transcoding_version="${{ steps.upstream.outputs.latest }}"
+            -f version="${{ steps.upstream.outputs.latest }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
