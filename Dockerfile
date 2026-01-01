@@ -45,6 +45,10 @@ LABEL org.opencontainers.image.build-schema=$BUILD_SCHEMA_VERSION
 
 
 # Working directory for transcoding workloads
+# Making this writable by anyone so that we can supply
+# different user ids at runtime and still have a working
+# directory
 WORKDIR /work
+RUN ["chmod", "777", "/work"]
 
 CMD ["/bin/bash"]
