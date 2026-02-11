@@ -1,8 +1,9 @@
-ARG BASE_IMAGE
+ARG BASE_IMAGE=ruby:3.4-slim
 FROM ${BASE_IMAGE}
 
 ARG VIDEO_TRANSCODING_VERSION
 ARG JAVA_VERSION
+ARG BUILD_SCHEMA_VERSION
 
 # Fail early if not provided
 RUN test -n "$VIDEO_TRANSCODING_VERSION"
@@ -41,7 +42,7 @@ ENV PATH="/opt/video_transcoding:${PATH}"
 LABEL org.opencontainers.image.title="video-transcoding"
 LABEL org.opencontainers.image.version="${VIDEO_TRANSCODING_VERSION}"
 LABEL org.opencontainers.image.java="${JAVA_VERSION:-none}"
-LABEL org.opencontainers.image.build-schema=$BUILD_SCHEMA_VERSION
+LABEL org.opencontainers.image.build-schema="${BUILD_SCHEMA_VERSION:-undefined}"
 
 
 # Working directory for transcoding workloads
