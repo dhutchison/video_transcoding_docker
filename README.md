@@ -36,7 +36,7 @@ All images are hosted on GitHub Container Registry (ghcr.io).
 | `2025.01.28-ruby3.4-jdk21` | Includes Amazon Corretto JDK 21 | Jenkins agent, CI/CD pipelines |
 | `latest` | Points to most recent standard image version | Development (not recommended for production) |
 
-Remember to always pin t specific version tags in production to ensure reproducible builds.
+Remember to always pin to a specific version tag in production to ensure reproducible builds.
 
 ## Usage Examples
 
