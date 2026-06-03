@@ -33,6 +33,7 @@ All images are hosted on GitHub Container Registry (ghcr.io).
 | Tag Pattern | Description | Use Case |
 |-------------|-------------|----------|
 | `2025.01.28` | Standard image with Ruby 3.4 | Local transcoding, general use |
+| `2025.01.28-ruby3.4` | Standard image with Ruby 3.4 | Explicit Ruby version pinning |
 | `2025.01.28-ruby3.4-jdk21` | Includes Amazon Corretto JDK 21 | Jenkins agent, CI/CD pipelines |
 | `latest` | Points to most recent standard image version | Development (not recommended for production) |
 
@@ -95,7 +96,7 @@ docker run --rm -v $(pwd):/work \
 
 ## Jenkins Integration
 
-While they container no Jenkins specific configuration or packages, the `-jdk21` tagged images can be used as Jenkins agents for automated transcoding pipelines.
+While the containers have no Jenkins specific configuration or packages, the `-jdk21` tagged images can be used as Jenkins agents for automated transcoding pipelines.
 
 ### Jenkins Agent Configuration
 
@@ -194,7 +195,7 @@ Build the standard image:
 
 ```bash
 docker build \
-  --build-arg BASE_IMAGE=ruby:3.4 \
+  --target standard \
   --build-arg VIDEO_TRANSCODING_VERSION=2025.01.28 \
   -t video_transcoding:local .
 ```
@@ -203,9 +204,8 @@ Build the variant with java included:
 
 ```bash
 docker build \
-  --build-arg BASE_IMAGE=ruby:3.4 \
+  --target jdk \
   --build-arg VIDEO_TRANSCODING_VERSION=2025.01.28 \
-  --build-arg JAVA_VERSION=21 \
   -t video_transcoding:local-jdk .
 ```
 
