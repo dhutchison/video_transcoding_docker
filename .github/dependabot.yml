@@ -4,8 +4,16 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    labels:
+      - dependencies
+      - github_actions
+      - schema:patch
 
   - package-ecosystem: docker
     directory: /
     schedule:
       interval: weekly
+    labels:
+      - dependencies
+      - docker
+      - schema:patch
