@@ -52,7 +52,7 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest
 
       - name: Generate standard image artifact attestation
-        uses: actions/attest-build-provenance@v3
+        uses: actions/attest-build-provenance@v4
         with:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
           subject-digest: ${{ steps.build-standard.outputs.digest }}
@@ -78,7 +78,7 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ inputs.version }}-ruby3.4-jdk21
 
       - name: Generate JDK image artifact attestation
-        uses: actions/attest-build-provenance@v3
+        uses: actions/attest-build-provenance@v4
         with:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
           subject-digest: ${{ steps.build-jdk.outputs.digest }}
