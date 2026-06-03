@@ -1,4 +1,4 @@
-FROM ruby:3.4-slim AS standard
+FROM ruby:4.0-slim AS standard
 
 ARG VIDEO_TRANSCODING_VERSION
 ARG BUILD_SCHEMA_VERSION
