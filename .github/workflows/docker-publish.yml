@@ -16,16 +16,6 @@ jobs:
   build-and-push-image:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        include:
-          - base: ruby:3.4-slim
-            java: ""
-            suffix: ""
-          - base: ruby:3.4-slim
-            java: "21"
-            suffix: "-ruby3.4-jdk21"
-
     permissions:
       packages: write
       contents: read
@@ -45,31 +35,56 @@ jobs:
       - name: Set up Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and push
-        id: build
+      - name: Build and push standard image
+        id: build-standard
         uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
         with:
           context: .
+          target: standard
           push: true
           platforms: linux/amd64,linux/arm64
           build-args: |
-            BASE_IMAGE=${{ matrix.base }}
             VIDEO_TRANSCODING_VERSION=${{ inputs.version }}
-            JAVA_VERSION=${{ matrix.java }}
             BUILD_SCHEMA_VERSION=${{ github.ref_name }}
           tags: |
-            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ inputs.version }}${{ matrix.suffix }}
-            ${{ matrix.suffix == '' && format('ghcr.io/{0}/{1}:latest', github.repository_owner, github.event.repository.name) || '' }}
+            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ inputs.version }}
+            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ inputs.version }}-ruby3.4
+            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest
 
-      - name: Generate artifact attestation
+      - name: Generate standard image artifact attestation
         uses: actions/attest-build-provenance@v3
         with:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
-          subject-digest: ${{ steps.build.outputs.digest }}
+          subject-digest: ${{ steps.build-standard.outputs.digest }}
           push-to-registry: true
 
-      - name: Validate multi-arch manifest
+      - name: Validate standard multi-arch manifest
         run: |
           docker manifest inspect \
-            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ inputs.version }}${{ matrix.suffix }}
+            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ inputs.version }}
 
+      - name: Build and push JDK image
+        id: build-jdk
+        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+        with:
+          context: .
+          target: jdk
+          push: true
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            VIDEO_TRANSCODING_VERSION=${{ inputs.version }}
+            BUILD_SCHEMA_VERSION=${{ github.ref_name }}
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ inputs.version }}-ruby3.4-jdk21
+
+      - name: Generate JDK image artifact attestation
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
+          subject-digest: ${{ steps.build-jdk.outputs.digest }}
+          push-to-registry: true
+
+      - name: Validate JDK multi-arch manifest
+        run: |
+          docker manifest inspect \
+            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ inputs.version }}-ruby3.4-jdk21
