@@ -14,7 +14,7 @@ jobs:
     steps:
       - name: Check schema labels
         run: |
-          labels=$(jq -r '.pull_request.labels[].name' <<< '${{ toJson(github.event) }}')
+          labels=$(jq -r '.pull_request.labels[].name' "$GITHUB_EVENT_PATH")
 
           count=$(echo "$labels" | grep -c "^schema:" || true)
 
