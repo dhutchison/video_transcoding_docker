@@ -22,7 +22,7 @@ jobs:
       - name: Determine schema bump
         id: bump
         run: |
-          labels=$(jq -r '.pull_request.labels[].name' <<< '${{ toJson(github.event) }}')
+          labels=$(jq -r '.pull_request.labels[].name' "$GITHUB_EVENT_PATH")
 
           bump=""
           for level in major minor patch; do
