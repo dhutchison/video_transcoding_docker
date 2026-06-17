@@ -37,7 +37,7 @@ jobs:
 
       - name: Build and push standard image
         id: build-standard
-        uses: docker/build-push-action@1d0c110a5d679453d30b396aa86f6bb6ae377b76
+        uses: docker/build-push-action@ff26911fd365b0233252dfbd8eede1c0e9ef9a51
         with:
           context: .
           target: standard
@@ -65,7 +65,7 @@ jobs:
 
       - name: Build and push JDK image
         id: build-jdk
-        uses: docker/build-push-action@1d0c110a5d679453d30b396aa86f6bb6ae377b76
+        uses: docker/build-push-action@ff26911fd365b0233252dfbd8eede1c0e9ef9a51
         with:
           context: .
           target: jdk
